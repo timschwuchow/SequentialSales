@@ -1,14 +1,14 @@
-// Copyright 2013 Timothy John Schwuchow
+// Copyright 2013,2018 Timothy John Schwuchow
 //
-// program 			-	laprepxxx.do	-	Basic setup for LA dataset
+// program 			-	cleprepxxx.do	-	Basic setup for Chi dataset
 //
 // version 			-	005		-	Cleaned up old code
 //
-// output			-	${datadir}lanoincludexxx.dta	-	non-target observations
-// 					-	${datadir}laincludexxx.dta		-	target observations
+// output			-	${datadir}clenoincludexxx.dta	-	non-target observations
+// 					-	${datadir}cleincludexxx.dta		-	target observations
 
 timer on 1
-local filename laprep${version}
+local filename cleprep${version}
 capture log close `filename'
 log using ${logdir}`filename'.txt, replace text name(`filename')
 local usealtmeasure	=	0
@@ -19,7 +19,7 @@ else	{
 	loc alt1 = 1
 }
 
-use sr_unique_id property_id sr_date_transfer sr_val_transfer applicantrace applicantincome applicantsex applicantethnicity sa_sqft sa_lotsize sa_nbr_bedrms sa_nbr_bath sa_nbr_rms sa_nbr_units sa_yr_blt sa_architecture_code sa_construction_code sa_bldg_shape_code sa_construction_qlty sa_x_coord sa_y_coord sa_subdivision sr_tran_type sa_lgl_dscrptn county tract tract1 sa_mail_house_nbr sa_mail_street_name sr_seller uc_use_code_std sr_buyer sa_yr_blt_effect occupancy arms_length_flag_dfs sa_company_flag sa_site_mail_same sa_site_zip using ${datdir}LAMatched.dta
+use sr_unique_id property_id sr_date_transfer sr_val_transfer applicantrace applicantincome applicantsex applicantethnicity sa_sqft sa_lotsize sa_nbr_bedrms sa_nbr_bath sa_nbr_rms sa_nbr_units sa_yr_blt sa_architecture_code sa_construction_code sa_bldg_shape_code sa_construction_qlty sa_x_coord sa_y_coord sa_subdivision sr_tran_type sa_lgl_dscrptn county tract tract1 sa_mail_house_nbr sa_mail_street_name sr_seller uc_use_code_std sr_buyer sa_yr_blt_effect occupancy arms_length_flag_dfs sa_company_flag sa_site_mail_same sa_site_zip using ${datdir}ClevelandMatched.dta
 
 ///////////////////////////////////
 // Rename and organize variables //
@@ -366,7 +366,7 @@ use sr_unique_id property_id sr_date_transfer sr_val_transfer applicantrace appl
 	preserve
 	keep if isincluded == 0
 	compress
-	save ${datdir}lanoinclude${version}.dta, replace
+	save ${datdir}clenoinclude${version}.dta, replace
 	restore
 	drop if isincluded == 0
 }
@@ -392,13 +392,12 @@ use sr_unique_id property_id sr_date_transfer sr_val_transfer applicantrace appl
 // Merge census data into main set //
 /////////////////////////////////////
 {
-    
-    gen state = "06"
+    drop state 
+    replace state = "39"
     ren county countytemp 
-    gen county = string(countytemp,"%03.0f") 
-    drop countytemp 
+    gen county = string(county,"%03.0f") 
 	sort state county 
-	merge m:1 state county using ${datdir}census.dta
+	merge m:1 state county using ${datdir}/census.dta
 	tab _merge
 	drop if _merge==2
 	drop _merge
@@ -471,10 +470,10 @@ use sr_unique_id property_id sr_date_transfer sr_val_transfer applicantrace appl
 
 ////////////////////////
 // Save included data //
-////////////////////////
+// ////////////////////////
 {
 	compress
-	save ${datdir}lainclude${version}.dta, replace
+	save ${datdir}cleinclude${version}.dta, replace
 }
 
 {

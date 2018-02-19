@@ -355,7 +355,7 @@ use sr_unique_id property_id sr_date_transfer sr_val_transfer applicantrace appl
 	// Want other houses to increase efficiency of time series identification but don't care about them other than that
 	by property_id: drop if _N == 1 & bid == .
 	tempvar p1
-	qui egen `p1'	=	index1(property_id)
+	qui egen p1	=	index1(property_id)
 	tab isincluded if `p1'
 	qui drop `p1'
 }
@@ -392,13 +392,12 @@ use sr_unique_id property_id sr_date_transfer sr_val_transfer applicantrace appl
 // Merge census data into main set //
 /////////////////////////////////////
 {
-    
-    gen state = "06"
+    drop state 
+    replace state = "06"
     ren county countytemp 
-    gen county = string(countytemp,"%03.0f") 
-    drop countytemp 
+    gen county = string(county,"%03.0f") 
 	sort state county 
-	merge m:1 state county using ${datdir}census.dta
+	merge m:1 state county using ${datdir}/census.dta
 	tab _merge
 	drop if _merge==2
 	drop _merge
