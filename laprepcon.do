@@ -123,17 +123,18 @@ egen condoid = group(zipcode street stnumber)
 gen sellid = soundex(selname)
 drop if missing(sellid) 
 egen devid = group(condoid sellid) 
+drop if missing(devid) 
 bysort devid: egen devnewsales = total(newsale)
 tab devnewsales 
 gen isdevsale = (devnewsales > 4 & newsale==1)
 tab isdevsale 
-
+keep if isdevsale 
 bysort devid: egen numunits = total(isdevsale) 
 tab numunits 
 
 
 
-bysort devid: egen medprice = median(price) if devid~=0
+bysort devid: egen medprice = median(price) 
 
 
 * Set ID as identifier
@@ -141,34 +142,22 @@ xtset devid
 
 *Generate sale order and number of units 
 gen ab = _n 
-bysort devid (sdate ab): gen sellorder = _n if devid~=0
-drop ab
-bysort devid: gen numunits = _N
-tab numunits 
-* Get rid of buildings where not all original sales are by the developer
-bysort condoid: egen numunitsc = total(newsale)
+bysort devid (sdate ab): gen sellorder = _n
 
-gen weirddropt = (numunits ~= numunitsc)
-tab weirddropt 
-sjdfdsklfj
-bysort condoid: egen weirddrop = max(weirddropt)
-tab weirddrop 
-drop if weirddrop == 1
-drop weirddrop weirddropt
+gen sellpct = sellorder / numunits 
 
-gen sellpct = (sellorder) / numunits if devid~=0
-
-*merge data 
-sort county tract 
-merge m:1 county tract using geo/LACensus
+/* Merge with census data */ 
+gen statestr = string(state,"%02.0f")
+gen countystr = string(county, "%03.0f") 
+drop state county 
+ren statestr state 
+ren countystr county 
+sort state county 
+merge m:1 state county using census.dta
+pause "Look at merge" 
 tab _merge
 drop if _merge==2
 drop _merge
-
-*Get rid of errant mistakes in assignment of condo county/tract 
-bysort devid: egen medhhinc2 = median(medhhinc) if devid~=0
-replace medhhinc = medhhinc2
-drop medhhinc2 
 
 
 
