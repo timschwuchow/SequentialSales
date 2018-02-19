@@ -55,3 +55,4 @@ dfmerge <- merge(df1990,df2000,by=c('state','county'),all=T)
 write.dta(dfmerge,'census.dta',version=11) 
 write.csv(dfmerge,'census.csv') 
 
+
