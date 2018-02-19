@@ -4,8 +4,7 @@ clear matrix
 log close _all 
 log using laprepcon.txt, replace text 
 
-set mem 6G
-set matsize 800
+
 
 use arms_length_flag_dfs sr_unique_id property_id sr_date_transfer sr_val_transfer applicantrace applicantincome applicantsex sa_sqft sa_lotsize sa_nbr_bedrms sa_nbr_bath sa_nbr_rms sa_nbr_units sa_yr_blt sa_architecture_code sa_construction_code sa_bldg_shape_code sa_construction_qlty sa_x_coord sa_y_coord sa_subdivision sr_tran_type sa_lgl_dscrptn state county tract1 sa_mail_house_nbr sa_mail_street_name sa_mail_zip sr_seller uc_use_code_std sr_buyer sa_yr_blt_effect occupancy   using LAMatched.dta
 
@@ -121,18 +120,19 @@ egen condoid = group(zipcode street stnumber)
 
 
 *Generate developer id - things at same address sold by same developer 
-egen sellid = soundex(selname)
+gen sellid = soundex(selname)
+drop if missing(sellid) 
 egen devid = group(condoid sellid) 
-bysort devid: egen devnewsales = total(newsales)
+bysort devid: egen devnewsales = total(newsale)
+tab devnewsales 
 gen isdevsale = (devnewsales > 4 & newsale==1)
 tab isdevsale 
-kjsdf
 
-bysort condoid sellid: egen numunits = total(newsale) 
+bysort devid: egen numunits = total(isdevsale) 
+tab numunits 
 
-bysort condoid sellid: gen isdev = (numunits > 4 & newsale==1) 
-tab isdev
-gen devid = condoid * (isdev==1) 
+
+
 bysort devid: egen medprice = median(price) if devid~=0
 
 
@@ -149,6 +149,7 @@ tab numunits
 bysort condoid: egen numunitsc = total(newsale)
 
 gen weirddropt = (numunits ~= numunitsc)
+tab weirddropt 
 sjdfdsklfj
 bysort condoid: egen weirddrop = max(weirddropt)
 tab weirddrop 
