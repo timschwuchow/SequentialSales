@@ -2,12 +2,12 @@ set more off
 clear
 clear matrix 
 log close _all 
-log using laprepcon2.txt, replace text 
+log using laprepcon.txt, replace text 
 
 set mem 6G
 set matsize 800
 
-use arms_length_flag_dfs sr_unique_id property_id sr_date_transfer sr_val_transfer applicantrace applicantincome applicantsex sa_sqft sa_lotsize sa_nbr_bedrms sa_nbr_bath sa_nbr_rms sa_nbr_units sa_yr_blt sa_architecture_code sa_construction_code sa_bldg_shape_code sa_construction_qlty sa_x_coord sa_y_coord sa_subdivision sr_tran_type sa_lgl_dscrptn state county tract tract1 sa_mail_house_nbr sa_mail_street_name sr_seller uc_use_code_std sr_buyer sa_yr_blt_effect occupancy  using LAMatched.dta
+use arms_length_flag_dfs sr_unique_id property_id sr_date_transfer sr_val_transfer applicantrace applicantincome applicantsex sa_sqft sa_lotsize sa_nbr_bedrms sa_nbr_bath sa_nbr_rms sa_nbr_units sa_yr_blt sa_architecture_code sa_construction_code sa_bldg_shape_code sa_construction_qlty sa_x_coord sa_y_coord sa_subdivision sr_tran_type sa_lgl_dscrptn state county tract1 sa_mail_house_nbr sa_mail_street_name sa_mail_zip sr_seller uc_use_code_std sr_buyer sa_yr_blt_effect occupancy   using LAMatched.dta
 
 
 *Rename variables 
@@ -39,7 +39,8 @@ rename sa_mail_house_nbr stnumber
 rename sa_mail_street_name street
 rename sr_seller selname
 rename sr_buyer buyname
-
+ren tract1 tract
+ren sa_mail_zip zipcode 
 
 label variable selldate "Date of sale"
 label variable utransid "Unique transaction id" 
@@ -68,7 +69,9 @@ label variable stnumber "Street number"
 label variable street "Street name"
 label variable selname "Seller name"
 label variable buyname "Buyer name"
+la var zipcode "Zip Code" 
 
+/* Destring and replace missing data */ 
 destring lotsize, replace force
 destring sqft, replace force
 destring numbed, replace force
@@ -76,7 +79,6 @@ destring numrooms, replace force
 destring numbath, replace force
 destring nunit, replace force 
 
-* Replace missing data 
 replace lotsize = . if lotsize==0
 replace sqft = . if sqft == 0
 replace numbed = . if numbed== 0
@@ -84,6 +86,7 @@ replace numbath = . if numbath == 0
 replace numrooms = . if numrooms==0
 replace nunit = . if nunit == 0 
 replace yrbld = . if yrbld == 0 
+replace state = 6 
 
 * Set up dates and drop if dates are nonsensical 
 tostring selldate, generate(selldates)
@@ -103,7 +106,7 @@ gen sdate = mdy(sellmo,sellday,sellyear)
 drop if usecode~="RCON"
 
 *Drop observations with bad data or units that are not new
-drop if yrbld ==. | yrbld < 1988
+drop if yrbld == . | yrbld < 1988
 drop if price == . | price < 25000
 bysort property_id selldate: drop if _N > 1
 
@@ -113,22 +116,21 @@ label variable newsale "1st observed unit sale"
 
 *Generate unique buildings by looking at address and seller name
 *May need to update subsequent sales to reflect originally written address from 1st sale, look into this
-replace tract = round(tract*100)
-egen condoid = group(county tract street stnumber)
+egen condoid = group(zipcode street stnumber)
 
-/*
-*Drop buildings if block sales occur.  
-bysort condoid buyname newsale: gen dropmark = (_N > 1 & newsale==1)
-bysort condoid: egen dropmark2 = max(dropmark)
-drop if dropmark2 > 0 
-drop dropmark dropmark2  
-*/ 
+
 
 *Generate developer id - things at same address sold by same developer 
 egen sellid = soundex(selname)
+egen devid = group(condoid sellid) 
+bysort devid: egen devnewsales = total(newsales)
+gen isdevsale = (devnewsales > 4 & newsale==1)
+tab isdevsale 
+kjsdf
 
-*Declare any entity selling more 
-bysort condoid sellid newsale: gen isdev = (_N > 5 & newsale==1) 
+bysort condoid sellid: egen numunits = total(newsale) 
+
+bysort condoid sellid: gen isdev = (numunits > 4 & newsale==1) 
 tab isdev
 gen devid = condoid * (isdev==1) 
 bysort devid: egen medprice = median(price) if devid~=0
@@ -145,6 +147,7 @@ bysort devid: gen numunits = _N
 tab numunits 
 * Get rid of buildings where not all original sales are by the developer
 bysort condoid: egen numunitsc = total(newsale)
+
 gen weirddropt = (numunits ~= numunitsc)
 sjdfdsklfj
 bysort condoid: egen weirddrop = max(weirddropt)
