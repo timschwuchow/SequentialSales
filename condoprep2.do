@@ -2,16 +2,16 @@ set more off
 clear
 clear matrix 
 log close _all 
-log using condoprep.txt, replace text 
+log using condoprep2.txt, replace text 
 
-set mem 8G
+set mem 6G
 set matsize 800
 
 loc flist LA Chicago Cleveland Miami SFBA 
 
 
 foreach f in `flist' { 
-use sr_unique_id sr_date_transfer sr_val_transfer sr_tran_type arms_length_flag_dfs property_id applicantrace applicantincome applicantsex applicantethnicity sa_sqft sa_sqft_dq sa_lotsize sa_nbr_bedrms sa_nbr_bath sa_nbr_bath_dq sa_nbr_rms sa_nbr_units sa_yr_blt sa_yr_blt_effect sa_pool_code sa_roof_code sa_view_code sa_architecture_code sa_construction_code sa_bldg_shape_code sa_construction_qlty sa_x_coord sa_y_coord sa_subdivision  sa_lgl_dscrptn sa_site_house_nbr sa_site_street_name sr_seller uc_use_code_std sr_buyer occupancy propertytype sr_site_addr_raw  using `f'Matched.dta 
+use sr_unique_id sr_date_transfer sr_val_transfer sr_tran_type arms_length_flag_dfs property_id applicantrace applicantincome applicantsex applicantethnicity sa_sqft sa_sqft_dq sa_lotsize sa_nbr_bedrms sa_nbr_bath sa_nbr_bath_dq sa_nbr_rms sa_nbr_units sa_yr_blt sa_yr_blt_effect sa_pool_code sa_roof_code sa_view_code sa_architecture_code sa_construction_code sa_bldg_shape_code sa_construction_qlty sa_x_coord sa_y_coord sa_subdivision  sa_lgl_dscrptn sa_site_house_nbr sa_site_street_name sr_seller uc_use_code_std sr_buyer occupancy propertytype sr_site_addr_raw county tract state  using `f'Matched.dta 
 
 
 
@@ -153,16 +153,12 @@ bysort devid: gen numunits = _N
 * Get rid of buildings where not all original sales are by the developer
 bysort condoid: egen numunitsc = total(newsale)
 gen weirddropt = (numunits ~= numunitsc)
-bysort condoid: egen weirddrop = max(weirddropt)
+    bysort condoid: egen weirddrop = max(weirddropt)
 tab weirddrop 
 drop if weirddrop == 1
 drop weirddrop weirddropt
 
 gen sellpct = (sellorder) / numunits if devid~=0
-
-save `f'Short.dta, replace 
-
-
 
 
 
@@ -201,10 +197,12 @@ gen hiinc = (linc > r(p50))
 label variable hiinc "1 = Log income over median" 
 replace hiinc = . if linc==.
 
-quietly sum medhhinc, detail
-gen lonhinc = (medhhinc < r(p50))
-label variable lonhinc "1= neighborhood median income under median" 
-replace lonhinc = . if medhhinc==.
+
+*quietly sum medhhinc, detail
+
+*gen lonhinc = (medhhinc < r(p50))
+*label variable lonhinc "1= neighborhood median income under median" 
+*replace lonhinc = . if medhhinc==.
 
 
 *Generate cumulative mean income and mean white among condos with complete information 
@@ -276,7 +274,7 @@ quietly sum awhiteend, detail
 gen hbwhite = (awhiteend >= r(p50)) if awhiteend ~= .
 
 label variable hbwhite "High white building" 
-
+/*
 *merge data 
 sort county tract 
 merge county tract using geo/censuslainc
@@ -288,6 +286,9 @@ drop _merge
 bysort devid: egen medhhinc2 = median(medhhinc) if devid~=0
 replace medhhinc = medhhinc2
 drop medhhinc2 
+*/ 
 
+save `f'Short.dta, replace 
+}
 log close _all
 

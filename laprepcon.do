@@ -2,35 +2,26 @@ set more off
 clear
 clear matrix 
 log close _all 
-log using condoprep.txt, replace text 
+log using laprepcon2.txt, replace text 
 
-set mem 8G
+set mem 6G
 set matsize 800
 
-loc flist LA Chicago Cleveland Miami SFBA 
-
-
-foreach f in `flist' { 
-use sr_unique_id sr_date_transfer sr_val_transfer sr_tran_type arms_length_flag_dfs property_id applicantrace applicantincome applicantsex applicantethnicity sa_sqft sa_sqft_dq sa_lotsize sa_nbr_bedrms sa_nbr_bath sa_nbr_bath_dq sa_nbr_rms sa_nbr_units sa_yr_blt sa_yr_blt_effect sa_pool_code sa_roof_code sa_view_code sa_architecture_code sa_construction_code sa_bldg_shape_code sa_construction_qlty sa_x_coord sa_y_coord sa_subdivision  sa_lgl_dscrptn sa_site_house_nbr sa_site_street_name sr_seller uc_use_code_std sr_buyer occupancy propertytype sr_site_addr_raw  using `f'Matched.dta 
-
+use arms_length_flag_dfs sr_unique_id property_id sr_date_transfer sr_val_transfer applicantrace applicantincome applicantsex sa_sqft sa_lotsize sa_nbr_bedrms sa_nbr_bath sa_nbr_rms sa_nbr_units sa_yr_blt sa_architecture_code sa_construction_code sa_bldg_shape_code sa_construction_qlty sa_x_coord sa_y_coord sa_subdivision sr_tran_type sa_lgl_dscrptn state county tract tract1 sa_mail_house_nbr sa_mail_street_name sr_seller uc_use_code_std sr_buyer sa_yr_blt_effect occupancy  using LAMatched.dta
 
 
 *Rename variables 
 rename sr_unique_id utransid
 rename sr_date_transfer selldate
 rename sr_val_transfer price
-rename sr_tran_type transcode 
 rename applicantrace race
 rename applicantincome inc
 rename applicantsex sex
-rename applicantethnicity eth 
 rename sa_sqft sqft 
-rename sa_sqft_dq sqft_dq 
 rename sa_lotsize lotsize
 rename sa_nbr_bedrms numbed
 rename sa_nbr_rms numrooms
 rename sa_nbr_bath numbath
-rename sa_nbr_bath_dq numbathdq 
 rename sa_lgl_dscrptn legal
 rename sa_nbr_units nunit
 rename sa_yr_blt yrbld
@@ -42,9 +33,10 @@ rename sa_construction_qlty conqual
 rename sa_x_coord x
 rename sa_y_coord y
 rename sa_subdivision subname
+rename sr_tran_type transcode
 rename uc_use_code_std usecode
-rename sa_site_house_nbr stnumber
-rename sa_site_street_name street
+rename sa_mail_house_nbr stnumber
+rename sa_mail_street_name street
 rename sr_seller selname
 rename sr_buyer buyname
 
@@ -107,18 +99,16 @@ destring sellday, replace
 drop selldates 
 gen sdate = mdy(sellmo,sellday,sellyear)
 
-
 *Drop all non-condo units 
 drop if usecode~="RCON"
 
 *Drop observations with bad data or units that are not new
 drop if yrbld ==. | yrbld < 1988
 drop if price == . | price < 25000
-drop if occupancy~=1
 bysort property_id selldate: drop if _N > 1
 
 *Non new sales are marked but now specified as a zero in newsale
-bysort property_id (selldate): gen newsale = (_n==1)
+bysort property_id (sdate): gen newsale = (_n==1)
 label variable newsale "1st observed unit sale"  
 
 *Generate unique buildings by looking at address and seller name
@@ -126,16 +116,19 @@ label variable newsale "1st observed unit sale"
 replace tract = round(tract*100)
 egen condoid = group(county tract street stnumber)
 
+/*
 *Drop buildings if block sales occur.  
 bysort condoid buyname newsale: gen dropmark = (_N > 1 & newsale==1)
 bysort condoid: egen dropmark2 = max(dropmark)
 drop if dropmark2 > 0 
 drop dropmark dropmark2  
+*/ 
 
 *Generate developer id - things at same address sold by same developer 
 egen sellid = soundex(selname)
+
 *Declare any entity selling more 
-bysort condoid sellid newsale: gen isdev = (_N > 4 & newsale==1) 
+bysort condoid sellid newsale: gen isdev = (_N > 5 & newsale==1) 
 tab isdev
 gen devid = condoid * (isdev==1) 
 bysort devid: egen medprice = median(price) if devid~=0
@@ -144,15 +137,16 @@ bysort devid: egen medprice = median(price) if devid~=0
 * Set ID as identifier
 xtset devid 
 
-
 *Generate sale order and number of units 
 gen ab = _n 
-bysort devid (selldate ab): gen sellorder = _n if devid~=0
+bysort devid (sdate ab): gen sellorder = _n if devid~=0
 drop ab
 bysort devid: gen numunits = _N
+tab numunits 
 * Get rid of buildings where not all original sales are by the developer
 bysort condoid: egen numunitsc = total(newsale)
 gen weirddropt = (numunits ~= numunitsc)
+sjdfdsklfj
 bysort condoid: egen weirddrop = max(weirddropt)
 tab weirddrop 
 drop if weirddrop == 1
@@ -160,14 +154,25 @@ drop weirddrop weirddropt
 
 gen sellpct = (sellorder) / numunits if devid~=0
 
-save `f'Short.dta, replace 
+*merge data 
+sort county tract 
+merge m:1 county tract using geo/LACensus
+tab _merge
+drop if _merge==2
+drop _merge
 
-
+*Get rid of errant mistakes in assignment of condo county/tract 
+bysort devid: egen medhhinc2 = median(medhhinc) if devid~=0
+replace medhhinc = medhhinc2
+drop medhhinc2 
 
 
 
 gen lp = log(price)
 label variable lp "Log of sale price" 
+
+gen loghhinc = log(medhhinc)
+label variable loghhinc "Log median household income of census tract" 
 
 gen linc = log(inc) 
 label variable linc "Log income"
@@ -190,7 +195,7 @@ replace white = . if race==.
 gen fcondo = (sellorder==1)
 label variable fcondo "First condo sold in building" 
 
-bysort devid (selldate): gen timesell = sdate[_n]-sdate[1] + 1
+bysort devid (sdate): gen timesell = sdate[_n]-sdate[1] + 1
 label variable timesell "Time (days) between first and current condo sales"
 gen ltsell = log(timesell)
 label variable ltsell "Log of timesell" 
@@ -215,15 +220,15 @@ gen incmod = inc
 
 replace incmod = 0 if incmod==.
 
-bysort devid (selldate ab): gen suminc = sum(incmod) - incmod
+bysort devid (sdate ab): gen suminc = sum(incmod) - incmod
 
 gen incn0 = (inc~=.)
 
-bysort devid (selldate ab): gen runinc = sum(incn0)
+bysort devid (sdate ab): gen runinc = sum(incn0)
 
 replace suminc = . if runinc < 2
 
-bysort devid (selldate ab): gen sumn = sum(incn0) - incn0
+bysort devid (sdate ab): gen sumn = sum(incn0) - incn0
 
 gen cumavinc = suminc / sumn
 
@@ -237,7 +242,7 @@ gen whitemod = white
 
 replace whitemod = 0 if white==. 
 
-bysort devid (selldate ab): gen sumwhite = sum(whitemod) - whitemod
+bysort devid (sdate ab): gen sumwhite = sum(whitemod) - whitemod
 
 gen whiten0 = (white~=.)
 
@@ -277,17 +282,9 @@ gen hbwhite = (awhiteend >= r(p50)) if awhiteend ~= .
 
 label variable hbwhite "High white building" 
 
-*merge data 
-sort county tract 
-merge county tract using geo/censuslainc
-tab _merge
-drop if _merge==2
-drop _merge
+save LAFinal.dta, replace 
 
-*Get rid of errant mistakes in assignment of condo county/tract 
-bysort devid: egen medhhinc2 = median(medhhinc) if devid~=0
-replace medhhinc = medhhinc2
-drop medhhinc2 
+
 
 log close _all
 
