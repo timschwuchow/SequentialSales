@@ -1,8 +1,8 @@
-// Copyright 2011 Timothy John Schwuchow
+// Copyright 2011, 2018 Timothy John Schwuchow
 // laresultsxxx.do - Regression results for developer pricing strategies
 // Version 004 - Base, carried over from older  code
 
-timer on 1
+
 local filename "laresultsnew${version}"
 local useincnorm = 0
 local usepricenorm = 0
@@ -158,10 +158,7 @@ xtreg `regvar' c.newsale#(c.sellpct##c.(`heterolist')) `avgextlist' i.timedummy 
 // xtset devsell
 // xtreg lpdifadj sqftdifadj numbeddifadj numbathdifadj ltselldifadj $heterolist `extlistadj', r fe
 
-timer off 1
-timer list 1
-!cat ${logdir}`filename'.txt | mail -s "`filename' finished running in `r(t1)' seconds" tjs24@duke.edu
-timer clear 1
+
 
 log close `filename'
 

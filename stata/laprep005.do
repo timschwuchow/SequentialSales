@@ -115,7 +115,11 @@ use sr_unique_id property_id sr_date_transfer sr_val_transfer applicantrace appl
 	replace nunit 		= 	. if nunit == 0
 	replace yrbld 		= 	. if yrbld == 0
 	replace inc 		= 	. if inc == 0
-
+    gen state = "06"
+    ren county countytemp 
+    gen county = string(countytemp,"%03.0f") 
+    drop countytemp 
+    
 }
 
 //////////////////////////
@@ -393,10 +397,7 @@ use sr_unique_id property_id sr_date_transfer sr_val_transfer applicantrace appl
 /////////////////////////////////////
 {
     
-    gen state = "06"
-    ren county countytemp 
-    gen county = string(countytemp,"%03.0f") 
-    drop countytemp 
+
 	sort state county 
 	merge m:1 state county using ${datdir}census.dta
 	tab _merge

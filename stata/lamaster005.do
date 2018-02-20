@@ -11,8 +11,7 @@ clear all
 cap log close _all
 
 set more off
-timer on 2
-pause on
+
 
 ///////////////////////
 // Control variables //
@@ -20,12 +19,12 @@ pause on
 
 global version 			"005"
 local dataprep		=	0					// =1 -> Generates data
-local extprep		=	1					// =1 -> Generates externality variables
-local regprep		=	1					// =1 -> Prepares final regressors for estimation
-local results		=	0 					// =1 -> Estimates model
-local resultsnew	=	0 					// =1 -> Estimates model
+local extprep		=	0					// =1 -> Generates externality variables
+local regprep		=	0					// =1 -> Prepares final regressors for estimation
+local results		=	1 					// =1 -> Estimates model
+local resultsnew	=	1 					// =1 -> Estimates model
 local clean			=	0					// =1 -> Clean up extra datasets
-local rsi			=	0					// =1 -> Construct repeat sales index
+local rsi			=	1					// =1 -> Construct repeat sales index
 local sumstat		=	0					// =1 -> Computes summary statistics
 
 local filename 			"lamaster${version}"
@@ -68,10 +67,8 @@ if `resultsnew'	==	1	{
 }
 if `clean'		==	1	{
 	do ${progdir}lacleanup${version}
-end
+}
 
-qui timer off 2
-qui timer list 2
-loc t2min=`r(t2)' / 60.0
 
-timer clear 2
+
+

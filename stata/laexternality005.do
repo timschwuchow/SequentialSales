@@ -6,7 +6,7 @@
 //
 // output			-	${datdir}laincludeextxxx.dta
 
-timer on 1
+
 clear all
 local filename 		"laexternality${version}"
 log using ${logdir}`filename'.txt, replace text name(`filename')
@@ -111,11 +111,7 @@ foreach z in inc zinc `rvars' {
 }
 
 save ${datdir}laincludeext${version}.dta, replace
-timer off 1
-timer list 1
-loc t1min =	`r(t1)'/60.0
 
-timer clear 1
 log close `filename'
 
 

@@ -1,12 +1,13 @@
-// Copyright (C) 2011-2012 Timothy John Schwuchow.
+// Copyright (C) 2011-2012, 2018 Timothy John Schwuchow.
 // larsi${version}.do - Generates repeat sales price index for the la area
 // Version 004	-	Comes from chainpriceseries020_1.do
-timer on 1
+
 
 
 
 local filename larsi${version} 
 log using ${logdir}`filename'.txt, text replace name(`filename') 
+set matsize 2000 
 use ${datdir}lafinal${version}.dta, clear 
 
 sum sellyear
@@ -22,6 +23,7 @@ qui sum timeslice
 local mintimeslice = r(min)
 local maxtimeslice = r(max) 
 forvalues x = `mintimeslice'/`maxtimeslice' { 
+    di "Computing `x' of `maxtimeslice'"
 	qui sum price if timeslice ==`x', detail 
 	qui drop if (price == . | price <= 0 | price < r(p5) | price > r(p95)) & timeslice == `x' 
 }
@@ -132,19 +134,14 @@ if !_rc {
 	replace pnorm = price / pindex
 }
 else	{
-	gen pnorm = price/index 
+	gen pnorm = price/pindex 
 } 
 
 la var pnorm "Normalized price (by RSI)" 
 sum pnorm 
 
 save, replace 
-timer off 1 
-timer list 1 
 
-timer clear 1  
 log close `filename' 
 
 
-
-!cat ${logdir}`filename'.txt | mail -s "`filename' done running in `r(t1)' seconds" tjs24@duke.edu

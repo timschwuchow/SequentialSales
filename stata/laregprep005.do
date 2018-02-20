@@ -1,4 +1,4 @@
-// Copyright 2011-2013  Timothy John Schwuchow
+// Copyright 2011-2013, 2018  Timothy John Schwuchow
 // 
 // program 			- 	laregprepxxx.do
 // 						Generates variables for regression analysis and finalizes dataset
@@ -13,7 +13,6 @@
 
 local filename "laregprep${version}"
 log using ${logdir}`filename'.txt, replace text name(`filename')
-timer on 1
 
 use ${datdir}laincludeext${version}.dta, clear
 
@@ -140,8 +139,5 @@ drop sellordermax sellorderalt
 compress 
 save ${datdir}lafinal${version}.dta, replace
 
-timer off 1
-timer list 1
-loc t1min =	`r(t1)'/60.0
-timer clear 1
+
 log close `filename'
