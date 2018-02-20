@@ -435,6 +435,7 @@ use sr_unique_id property_id sr_date_transfer sr_val_transfer applicantrace appl
 	gen asian 		= 	(race == 2)
 	gen black 		= 	(race == 3)
 	gen white 		= 	(race == 5)
+	local rvars black white asian native hisp
 	egen hasrace 	= 	rowmax(`rvars')
 
 	label variable hisp "=1 -> buyer is Hispanic"
@@ -443,7 +444,7 @@ use sr_unique_id property_id sr_date_transfer sr_val_transfer applicantrace appl
 	label variable black "=1 -> buyer is Black"
 	label variable white "=1 -> buyer is White"
 	la var hasrace "=1 if buyer race is known"
-	local rvars black white asian native hisp
+	
 }
 
 /////////////////////////////////////////

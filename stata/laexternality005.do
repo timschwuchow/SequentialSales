@@ -1,4 +1,4 @@
-// Copyright 2011-2013  Timothy John Schwuchow
+// Copyright 2011-2013,2018  Timothy John Schwuchow
 // 
 // program 			- 	laexternalityxxx.do	-	Computes income and race externalities - computes average demographics up to the nth sale, as well as final average demographics after each sale.  Generates final data for estimation.
 //
@@ -10,14 +10,13 @@ timer on 1
 clear all
 local filename 		"laexternality${version}"
 log using ${logdir}`filename'.txt, replace text name(`filename')
-set maxvar 10000
+
 
 ////////////////////////////
 // Unzip file if archived //
 ////////////////////////////
 ! if [ ! -f ${datdir}lainclude${version}.dta ]; then cd $datdir && tar xvzf lainclude${version}.tar.gz && cd $progdir; else echo "File exists"; fi
-tsopen ${datdir}lainclude${version}.dta, memory(3.0)
-
+use ${datdir}lainclude${version}.dta
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Compute maximum number of trans. within building (computations must be done iteratively, though computations will be null for most buildings further in the loop //
@@ -112,12 +111,10 @@ foreach z in inc zinc `rvars' {
 }
 
 save ${datdir}laincludeext${version}.dta, replace
-!cd $datdir && tar cvzf lainclude${version}.tar.gz lainclude${version}.dta && cd $progdir
-!rm ${datdir}lainclude${version}.dta
 timer off 1
 timer list 1
 loc t1min =	`r(t1)'/60.0
-!echo "`filename' finished running in `r(t1min)' minutes" | mail -s "`filename' finished running in `r(t1min)' minutes" tjs24@duke.edu
+
 timer clear 1
 log close `filename'
 
