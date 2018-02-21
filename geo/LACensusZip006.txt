@@ -1,0 +1,82 @@
+--------------------------------------------------------------------------------------------------------------------------------------------------------------
+      name:  LACensusZip006
+       log:  /afs/econ.duke.edu/data/bayerp/tim/condo/data/geo/LACensusZip006.txt
+  log type:  text
+ opened on:   5 Mar 2014, 05:48:31
+
+. 
+. 
+. insheet using `datdir'ncdb.csv, comma clear 
+(41 vars, 7068 obs)
+
+. ren ucounty county 
+
+. ren trctcd1 tract1 
+
+. ren shrnhw9 white1990
+
+. ren shrnhb9 black1990
+
+. ren shrnhi9 natamer1990
+
+. ren shrnha9 asian1990
+
+. ren shrnho9 other1990
+
+. ren shrhsp9 hisp1990
+
+. ren mdvalhs9 medhval1990 
+
+. ren mdfamy9 medhhinc1990
+
+. ren unemprt9 unemprt1990 
+
+. gen college1990 = educ169/educpp9
+(85 missing values generated)
+
+. ren shrnhw0 white2000
+
+. ren shrnhb0 black2000
+
+. ren shrnhi0 natamer2000
+
+. ren shrnha0 asian2000
+
+. ren shrnho0 other2000
+
+. ren shrhsp0 hisp2000
+
+. ren mdvalhs0 medhval2000 
+
+. ren mdfamy0 medhhinc2000
+
+. ren unemprt0 unemprt2000 
+
+. gen college2000 = educ160/educpp0
+(33 missing values generated)
+
+. keep county tract *1990 *2000
+
+. sort county tract 
+
+. save `savedir'LACensusZip.dta, replace 
+(note: file /afs/econ/data/bayerp/tim/condo/data/geo/LACensusZip.dta not found)
+file /afs/econ/data/bayerp/tim/condo/data/geo/LACensusZip.dta saved
+
+. 
+. 
+. 
+end of do-file
+
+. ls
+
+total 877
+-rw-r--r-- 1 tjs24 econusers   1131 Mar  5 05:48 LACensusZip006.do
+-rw-r--r-- 1 tjs24 econusers   1327 Mar  5 05:48 LACensusZip006.txt
+-rw-r--r-- 1 tjs24 econusers 193219 Mar  4 21:58 lacensuszip.dta
+-rw-r--r-- 1 tjs24 econusers 654949 Mar  5 05:48 LACensusZip.dta
+drwxr-xr-x 2 tjs24 econusers   2048 Mar  5 05:35 lazip/
+-rw-r--r-- 1 tjs24 econusers   4306 May 29  2012 lazipcensus001.do
+-rw-r--r-- 1 tjs24 econusers  37309 May 29  2012 lazipcensus001.txt
+
+. exit
