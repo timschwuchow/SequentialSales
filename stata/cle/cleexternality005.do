@@ -1,22 +1,19 @@
-// Copyright 2011-2013,2018  Timothy John Schwuchow
+// Copyright (C) 2018  Timothy John Schwuchow
 // 
-// program 			- 	laexternalityxxx.do	-	Computes income and race externalities - computes average demographics up to the nth sale, as well as final average demographics after each sale.  Generates final data for estimation.
-//
-// version 			-	005
-//
-// output			-	${datdir}laincludeextxxx.dta
+// program 			- 	cleexternalityxxx.do	-	Computes income and race externalities - computes average demographics up to the nth sale, as well as final average demographics after each sale.  Generates final data for estimation.
+// output			-	${datdir}cleincludeextxxx.dta
 
 
 clear all
-local filename 		"laexternality${version}"
+local filename 		"cleexternality${version}"
 log using ${logdir}`filename'.txt, replace text name(`filename')
 
 
 ////////////////////////////
 // Unzip file if archived //
 ////////////////////////////
-! if [ ! -f ${datdir}lainclude${version}.dta ]; then cd $datdir && tar xvzf lainclude${version}.tar.gz && cd $progdir; else echo "File exists"; fi
-use ${datdir}lainclude${version}.dta
+
+use ${datdir}cleinclude${version}.dta
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Compute maximum number of trans. within building (computations must be done iteratively, though computations will be null for most buildings further in the loop //
@@ -110,7 +107,7 @@ foreach z in inc zinc `rvars' {
 
 }
 
-save ${datdir}laincludeext${version}.dta, replace
+save ${datdir}cleincludeext${version}.dta, replace
 
 log close `filename'
 

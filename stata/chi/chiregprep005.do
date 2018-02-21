@@ -1,24 +1,18 @@
-// Copyright 2011-2013  Timothy John Schwuchow
+// Copyright (C) 2018 Timothy John Schwuchow
 // 
-// program 			- 	laregprepxxx.do
+// program 			- 	chiregprepxxx.do
 // 						Generates variables for regression analysis and finalizes dataset
-// 
-// version 			-	004		-	Base				
-// 					-	005		-	
-//
-// output			-	${datdir}lafinalxxx.dta
+
+// output			-	${datdir}chifinalxxx.dta
 
 
-
-
-local filename "laregprep${version}"
+local filename "chiregprep${version}"
 log using ${logdir}`filename'.txt, replace text name(`filename')
-timer on 1
-! if [ ! -f ${datdir}laincludeext${version}.dta ]; then cd $datdir &&  tar xvzf laregprep${version}.tar.gz && cd $progdir; else echo "File exists"; fi
-use ${datdir}laincludeext${version}.dta, clear
+
+use ${datdir}chiincludeext${version}.dta, clear
 
 
-append using ${datdir}lanoinclude${version}.dta
+append using ${datdir}chinoinclude${version}.dta
 
 qui sum sellyear
 local minyear = `r(min)'
@@ -47,15 +41,15 @@ local regvar lp sqft numbed numbath age ltsell
 	egen timedummy = group(ymo)
 	quietly tab timedummy, gen(timedum)
 	local ntimedum = `r(r)'
-	sort property_id selldate obnum
+	sort property_id sdate obnum
 	forvalues x = 1/`ntimedum' {
-		by property_id (selldate obnum ): replace timedum`x' =  timedum`x'[_n+1] - timedum`x'[_n] if _n ~= _N
+		bysort property_id (sdate obnum ): replace timedum`x' =  timedum`x'[_n+1] - timedum`x'[_n] if _n ~= _N
 	}
 	foreach x in `heterolist' {
 		gen `x'sellpct = `x'*sellpct
 		local intvar `intvar' `x'sellpct
 	}
-	by property_id (selldate obnum): gen sellpctdif = sellpct[_n+1] - sellpct[_n]
+	bysort property_id (sdate obnum): gen sellpctdif = sellpct[_n+1] - sellpct[_n]
 }
 
 /////////////////////////////////////
@@ -70,10 +64,10 @@ la var cumavlinc "Cum. Avg. Income"
 gen bldgtranspct = bldgtransorder / bldgnumtrans
 gen pisfirst = (sellorder == 1)
 xtset bid
-sort bid selldate obnum
+sort bid sdate obnum
 foreach x in `heterolist'	{
 	
-	by bid (selldate obnum): replace cumav`x' = 0 if sellorder == 1 & cumav`x'[_n+1] ~= . & isincluded == 1
+	by bid (sdate obnum): replace cumav`x' = 0 if sellorder == 1 & cumav`x'[_n+1] ~= . & isincluded == 1
 	la var cumav`x' "Cum. avg. `x'"
 	xtreg av`x'end cumav`x' bldgtranspct pisfirst i.timedummy if isincluded==1, r fe
 	qui predict meanext`x'
@@ -88,42 +82,42 @@ foreach x in `heterolist'	{
 
 
 
-sort property_id selldate obnum
+sort property_id sdate obnum
 foreach x in `regvar' {
 	di "`x'"
-	by property_id (selldate obnum): gen `x'dif = `x'[_n+1] - `x'[_n]
+	bysort property_id (sdate obnum): gen `x'dif = `x'[_n+1] - `x'[_n]
 	local regvardif `regvardif' `x'dif
 }
 
 foreach x in `heterolist' {
-	by property_id (selldate obnum): gen `x'forward = `x'[_n+1]
+	bysort property_id (sdate obnum): gen `x'forward = `x'[_n+1]
 	local heterolistforward `heterolistforward' `x'forward
 }
 
 foreach x in `heterolist' {
-	by property_id (selldate obnum): gen `x'dif = `x'[_n+1] - `x'[_n]
+	bysort property_id (sdate obnum): gen `x'dif = `x'[_n+1] - `x'[_n]
 	local heterolistdif `heterolistdif' `x'dif
 }
 
 foreach x in `extlist' {
-	by property_id (selldate obnum): gen `x'dif = `x'[_n+1] - `x'[_n]
+	bysort property_id (sdate obnum): gen `x'dif = `x'[_n+1] - `x'[_n]
 	local extdiflist $extdiflist `x'dif
 }
 
 foreach x in `cumextlist' {
-	by property_id (selldate obnum): gen `x'dif = `x'[_n+1] - `x'[_n]
+	bysort property_id (sdate obnum): gen `x'dif = `x'[_n+1] - `x'[_n]
 	local cumextdiflist `cumextdiflist' `x'dif
 }
-by property_id (selldate obnum): gen sdatedif = sdate[_n+1] - sdate[_n]
-by property_id (selldate obnum): gen notdif = (sqft[_n]==sqft[1] & sqftdif==0 & numbed[_n]==numbed[1] & numbeddif == 0 & numbath[_n]==numbath[1] & numbathdif == 0 & numtrans ~= 1)
-by property_id (selldate obnum): gen notdif2 = (sqft[_n]==sqft[1] & sqft[1] ~= . & numbed[_n]==numbed[1] & numbed[1] ~= . & numbath[_n]==numbath[1] & numbath[1] ~= . & numtrans ~= 1 )
-bysort bid newsale (selldate obnum): gen sellpctcounter = _n/_N if newsale == 0 & isincluded == 1
+bysort property_id (sdate obnum): gen sdatedif = sdate[_n+1] - sdate[_n]
+bysort property_id (sdate obnum): gen notdif = (sqft[_n]==sqft[1] & sqftdif==0 & numbed[_n]==numbed[1] & numbeddif == 0 & numbath[_n]==numbath[1] & numbathdif == 0 & numtrans ~= 1)
+bysort property_id (sdate obnum): gen notdif2 = (sqft[_n]==sqft[1] & sqft[1] ~= . & numbed[_n]==numbed[1] & numbed[1] ~= . & numbath[_n]==numbath[1] & numbath[1] ~= . & numtrans ~= 1 )
+bysort bid newsale (sdate obnum): gen sellpctcounter = _n/_N if newsale == 0 & isincluded == 1
 
 
 ////////////////////////////
 // Diff in diff variables //
 ////////////////////////////
-bysort property_id (selldate obnum): gen nsellyear = sellyear[_n+1] if notdif2[_n+1]==1 & newsale == 1 & isincluded == 1
+bysort property_id (sdate obnum): gen nsellyear = sellyear[_n+1] if notdif2[_n+1]==1 & newsale == 1 & isincluded == 1
 egen ddcell = group(bid nsellyear)
 bysort ddcell: gen ddcount = _N
 gen ddinc = (ddcount > 1 & ddcount ~= .) if isincluded == 1
@@ -137,13 +131,8 @@ bysort bid newsale (sellorderalt): gen sellordermax	= sellorderalt[_N]
 gen sellpctalt	=	sellorderalt/sellordermax
 drop sellordermax sellorderalt
 
+compress 
+save ${datdir}chifinal${version}.dta, replace
 
-save ${datdir}lafinal${version}.dta, replace
-! cd $datdir && tar cvzf laregprep${version}.tar.gz laincludeext${version}.dta lanoinclude${version}.dta && cd $progdir
-!rm ${datdir}laincludeext${version}.dta ${datdir}lanoinclude${version}.dta
-timer off 1
-timer list 1
-loc t1min =	`r(t1)'/60.0
-!echo "`filename' finished running in `r(t1min)' minutes" | mail -s "`filename' finished running in `r(t1min)' minutes" tjs24@duke.edu
-timer clear 1
+
 log close `filename'

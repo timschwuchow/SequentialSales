@@ -1,8 +1,5 @@
-// Copyright 2011-2013, 2018 Timothy Schwuchow
-// lapmasterxxx.do 	- 	Control file for sequential sale/price analysis
-// Version 	003 	- 	Base, works off earlier code
-// 			004		- 	Developers now identified off of activity in zip code alone - only two time cells used before/after to avoid splitting buildings with long build tails
-// 			005		-	Same
+// Copyright (C) 2018 Timothy John Schwuchow
+// miamasterxxx.do 	- 	Control file for sequential sale/price analysis
 
 ///////////
 // Setup // 
@@ -20,17 +17,17 @@ set more off
 global version 			"005"
 local dataprep		=	0					// =1 -> Generates data
 local extprep		=	0					// =1 -> Generates externality variables
-local regprep		=	0					// =1 -> Prepares final regressors for estimation
+local regprep		=	1					// =1 -> Prepares final regressors for estimation
 local results		=	1 					// =1 -> Estimates model
 local resultsnew	=	1 					// =1 -> Estimates model
 local clean			=	0					// =1 -> Clean up extra datasets
-local rsi			=	1					// =1 -> Construct repeat sales index
+local rsi			=	0					// =1 -> Construct repeat sales index
 local sumstat		=	0					// =1 -> Computes summary statistics
 
-local filename 			"lamaster${version}"
+local filename 			"miamaster${version}"
 global homedir          "/home/tim/main/DataIncubator/"
 global datdir 			"${homedir}data/"
-global progdir 			"${homedir}stata/"
+global progdir 			"${homedir}stata/mia/"
 global logdir 			"${homedir}logs/"
 global dataoutdir 		"${homedir}data/"
 di "$datdir"
@@ -45,28 +42,28 @@ global transnumcap	=	1500				// Maximum number of transactions per building - ke
 global nsizetile	=	5					// Size quantiles for regression analysis
 
 if `dataprep'	==	1	{
-	do ${progdir}laprep${version}
+	do ${progdir}miaprep${version}
 }
 if `extprep'	==	1	{
-	do ${progdir}laexternality${version}
+	do ${progdir}miaexternality${version}
 }
 if `regprep' 	==	1	{
-	do ${progdir}laregprep${version}
+	do ${progdir}miaregprep${version}
 }
 if `rsi'		==	1	{
-	do ${progdir}larsi${version}
+	do ${progdir}miarsi${version}
 }
 if `sumstat'	==	1	{
-	do ${progdir}lasumstat${version}
+	do ${progdir}miasumstat${version}
 }
 if `results'	==	1	{
-	do ${progdir}laresults${version}
+	do ${progdir}miaresults${version}
 }
 if `resultsnew'	==	1	{
-	do ${progdir}laresultsnew${version}
+	do ${progdir}miaresultsnew${version}
 }
 if `clean'		==	1	{
-	do ${progdir}lacleanup${version}
+	do ${progdir}miacleanup${version}
 }
 
 

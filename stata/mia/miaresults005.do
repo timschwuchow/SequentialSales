@@ -1,13 +1,13 @@
 // Copyright (C) 2018 Timothy John Schwuchow
-// chiresultsxxx.do - Regression results for developer pricing strategies 
+// miaresultsxxx.do - Regression results for developer pricing strategies 
 
 
-local filename "chiresults${version}"
+local filename "miaresults${version}"
 local useincnorm = 0
 local usepricenorm = 0 
 log using ${logdir}`filename'.txt , replace text name(`filename') 
 
-use ${datdir}chifinal${version}.dta, clear 
+use ${datdir}miafinal${version}.dta, clear 
 
 **********
 ** Prep **
@@ -62,7 +62,19 @@ xtreg `regvar' c.sellpct##c.(`heterolist') `cumextlist' ibn.timedummy if newsale
 xtreg `regvar' c.sellpctcounter##c.(`heterolist') `cumextlist' ibn.timedummy if newsale == 0, r fe 
 // outtex, level below plain file(textable/`texname'.tex) append long title(Counterfactual regression with externality)
 
-
+// foreach x in $heterolist  { 
+// 	gen `x'sellpctcounter = `x'*sellpctcounter
+// 	local counterinterlist `counterinterlist' `x'sellpctcounter  
+// }
+// local vtemp $regvar `counterinterlist' $extlist 
+// egen keeper = rowmiss(`vtemp') 
+// foreach `x' in `vtemp' { 
+// 	bysort timedummy: egen m`x' = mean(`x') if keeper == 0 & newsale == 0 
+// 	gen md`x' = `x' - m`x'
+// 	drop m`x' 
+// 	local mdvtemp `mdvtemp' md`x'
+// }  	
+// xtreg `mdvtemp', fe r //Only resales
 
 *********************
 ** Repeat analysis ** 
@@ -110,6 +122,7 @@ xtreg `regvar' c.newsale#(c.sellpct##c.(`heterolist')) `avgextlist'  if notdif2=
 // outtex, level below plain file(textable/`texname'.tex) append long title(Property FE regression with externality, no secondary sale heterogeneity)
 // a2reg lp age ltsell sellpct $heterolist $intvar $extlist, individual(property_id) unit(timedummy) 
 // reg2hdfe lp age ltsell sellpct $heterolist $intvar $extlist if notdif2==1, id1(property_id) id2(timedummy)
+
 
 
 

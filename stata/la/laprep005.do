@@ -115,7 +115,11 @@ use sr_unique_id property_id sr_date_transfer sr_val_transfer applicantrace appl
 	replace nunit 		= 	. if nunit == 0
 	replace yrbld 		= 	. if yrbld == 0
 	replace inc 		= 	. if inc == 0
-
+    gen state = "06"
+    ren county countytemp 
+    gen county = string(countytemp,"%03.0f") 
+    drop countytemp 
+    
 }
 
 //////////////////////////
@@ -355,7 +359,7 @@ use sr_unique_id property_id sr_date_transfer sr_val_transfer applicantrace appl
 	// Want other houses to increase efficiency of time series identification but don't care about them other than that
 	by property_id: drop if _N == 1 & bid == .
 	tempvar p1
-	qui egen p1	=	index1(property_id)
+	qui egen `p1'	=	index1(property_id)
 	tab isincluded if `p1'
 	qui drop `p1'
 }
@@ -392,12 +396,10 @@ use sr_unique_id property_id sr_date_transfer sr_val_transfer applicantrace appl
 // Merge census data into main set //
 /////////////////////////////////////
 {
-    drop state 
-    replace state = "06"
-    ren county countytemp 
-    gen county = string(county,"%03.0f") 
+    
+
 	sort state county 
-	merge m:1 state county using ${datdir}/census.dta
+	merge m:1 state county using ${datdir}census.dta
 	tab _merge
 	drop if _merge==2
 	drop _merge
@@ -434,6 +436,7 @@ use sr_unique_id property_id sr_date_transfer sr_val_transfer applicantrace appl
 	gen asian 		= 	(race == 2)
 	gen black 		= 	(race == 3)
 	gen white 		= 	(race == 5)
+	local rvars black white asian native hisp
 	egen hasrace 	= 	rowmax(`rvars')
 
 	label variable hisp "=1 -> buyer is Hispanic"
@@ -442,7 +445,7 @@ use sr_unique_id property_id sr_date_transfer sr_val_transfer applicantrace appl
 	label variable black "=1 -> buyer is Black"
 	label variable white "=1 -> buyer is White"
 	la var hasrace "=1 if buyer race is known"
-	local rvars black white asian native hisp
+	
 }
 
 /////////////////////////////////////////

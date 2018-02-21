@@ -1,23 +1,17 @@
-// Copyright 2011-2013, 2018  Timothy John Schwuchow
+// Copyright (C) 2018  Timothy John Schwuchow
 // 
-// program 			- 	laregprepxxx.do
+// program 			- 	miaregprepxxx.do
 // 						Generates variables for regression analysis and finalizes dataset
-// 
-// version 			-	004		-	Base				
-// 					-	005		-	
-//
-// output			-	${datdir}lafinalxxx.dta
+// output			-	${datdir}miafinalxxx.dta
 
 
-
-
-local filename "laregprep${version}"
+local filename "miaregprep${version}"
 log using ${logdir}`filename'.txt, replace text name(`filename')
 
-use ${datdir}laincludeext${version}.dta, clear
+use ${datdir}miaincludeext${version}.dta, clear
 
 
-append using ${datdir}lanoinclude${version}.dta
+append using ${datdir}mianoinclude${version}.dta
 
 qui sum sellyear
 local minyear = `r(min)'
@@ -46,15 +40,15 @@ local regvar lp sqft numbed numbath age ltsell
 	egen timedummy = group(ymo)
 	quietly tab timedummy, gen(timedum)
 	local ntimedum = `r(r)'
-	sort property_id selldate obnum
+	sort property_id sdate obnum
 	forvalues x = 1/`ntimedum' {
-		by property_id (selldate obnum ): replace timedum`x' =  timedum`x'[_n+1] - timedum`x'[_n] if _n ~= _N
+		by property_id (sdate obnum ): replace timedum`x' =  timedum`x'[_n+1] - timedum`x'[_n] if _n ~= _N
 	}
 	foreach x in `heterolist' {
 		gen `x'sellpct = `x'*sellpct
 		local intvar `intvar' `x'sellpct
 	}
-	by property_id (selldate obnum): gen sellpctdif = sellpct[_n+1] - sellpct[_n]
+	bysort property_id (sdate obnum): gen sellpctdif = sellpct[_n+1] - sellpct[_n]
 }
 
 /////////////////////////////////////
@@ -137,7 +131,7 @@ gen sellpctalt	=	sellorderalt/sellordermax
 drop sellordermax sellorderalt
 
 compress 
-save ${datdir}lafinal${version}.dta, replace
+save ${datdir}miafinal${version}.dta, replace
 
 
 log close `filename'

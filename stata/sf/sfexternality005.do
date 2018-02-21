@@ -1,13 +1,11 @@
 // Copyright (C) 2018 Timothy John Schwuchow
 // 
-// program 			- 	chiexternalityxxx.do	-	Computes income and race externalities - computes average demographics up to the nth sale, as well as final average demographics after each sale.  Generates final data for estimation.
-
-//
-// output			-	${datdir}chiincludeextxxx.dta
+// program 			- 	sfexternalityxxx.do	-	Computes income and race externalities - computes average demographics up to the nth sale, as well as final average demographics after each sale.  Generates final data for estimation.
+// output			-	${datdir}sfincludeextxxx.dta
 
 
 clear all
-local filename 		"chiexternality${version}"
+local filename 		"sfexternality${version}"
 log using ${logdir}`filename'.txt, replace text name(`filename')
 
 
@@ -15,7 +13,7 @@ log using ${logdir}`filename'.txt, replace text name(`filename')
 // Unzip file if archived //
 ////////////////////////////
 
-use ${datdir}chiinclude${version}.dta
+use ${datdir}sfinclude${version}.dta
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Compute maximum number of trans. within building (computations must be done iteratively, though computations will be null for most buildings further in the loop //
@@ -109,7 +107,7 @@ foreach z in inc zinc `rvars' {
 
 }
 
-save ${datdir}chiincludeext${version}.dta, replace
+save ${datdir}sfincludeext${version}.dta, replace
 
 log close `filename'
 

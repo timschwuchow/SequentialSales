@@ -1,21 +1,17 @@
-// Copyright (C) 2018 Timothy John Schwuchow
+// Copyright (C) 2018  Timothy John Schwuchow
 // 
-// program 			- 	laregprepxxx.do
+// program 			- 	cleregprepxxx.do
 // 						Generates variables for regression analysis and finalizes dataset
-// 
-//
-// output			-	${datdir}lafinalxxx.dta
+// output			-	${datdir}clefinalxxx.dta
 
 
-// 
-
-local filename "laregprep${version}"
+local filename "cleregprep${version}"
 log using ${logdir}`filename'.txt, replace text name(`filename')
 
-use ${datdir}laincludeext${version}.dta, clear
+use ${datdir}cleincludeext${version}.dta, clear
 
 
-append using ${datdir}lanoinclude${version}.dta
+append using ${datdir}clenoinclude${version}.dta
 
 qui sum sellyear
 local minyear = `r(min)'
@@ -46,7 +42,7 @@ local regvar lp sqft numbed numbath age ltsell
 	local ntimedum = `r(r)'
 	sort property_id sdate obnum
 	forvalues x = 1/`ntimedum' {
-		by property_id (sdate obnum ): replace timedum`x' =  timedum`x'[_n+1] - timedum`x'[_n] if _n ~= _N
+		bysort property_id (sdate obnum ): replace timedum`x' =  timedum`x'[_n+1] - timedum`x'[_n] if _n ~= _N
 	}
 	foreach x in `heterolist' {
 		gen `x'sellpct = `x'*sellpct
@@ -70,7 +66,7 @@ xtset bid
 sort bid sdate obnum
 foreach x in `heterolist'	{
 	
-	by bid (sdate obnum): replace cumav`x' = 0 if sellorder == 1 & cumav`x'[_n+1] ~= . & isincluded == 1
+	bysort bid (sdate obnum): replace cumav`x' = 0 if sellorder == 1 & cumav`x'[_n+1] ~= . & isincluded == 1
 	la var cumav`x' "Cum. avg. `x'"
 	xtreg av`x'end cumav`x' bldgtranspct pisfirst i.timedummy if isincluded==1, r fe
 	qui predict meanext`x'
@@ -93,12 +89,12 @@ foreach x in `regvar' {
 }
 
 foreach x in `heterolist' {
-	by property_id (sdate obnum): gen `x'forward = `x'[_n+1]
+	bysort property_id (sdate obnum): gen `x'forward = `x'[_n+1]
 	local heterolistforward `heterolistforward' `x'forward
 }
 
 foreach x in `heterolist' {
-	by property_id (sdate obnum): gen `x'dif = `x'[_n+1] - `x'[_n]
+	bysort property_id (sdate obnum): gen `x'dif = `x'[_n+1] - `x'[_n]
 	local heterolistdif `heterolistdif' `x'dif
 }
 
@@ -135,7 +131,7 @@ gen sellpctalt	=	sellorderalt/sellordermax
 drop sellordermax sellorderalt
 
 compress 
-save ${datdir}lafinal${version}.dta, replace
+save ${datdir}clefinal${version}.dta, replace
 
 
 log close `filename'

@@ -1,21 +1,17 @@
 // Copyright (C) 2018 Timothy John Schwuchow
 // 
-// program 			- 	laregprepxxx.do
+// program 			- 	sfregprepxxx.do
 // 						Generates variables for regression analysis and finalizes dataset
-// 
-//
-// output			-	${datdir}lafinalxxx.dta
+// output			-	${datdir}sffinalxxx.dta
 
 
-// 
-
-local filename "laregprep${version}"
+local filename "sfregprep${version}"
 log using ${logdir}`filename'.txt, replace text name(`filename')
 
-use ${datdir}laincludeext${version}.dta, clear
+use ${datdir}sfincludeext${version}.dta, clear
 
 
-append using ${datdir}lanoinclude${version}.dta
+append using ${datdir}sfnoinclude${version}.dta
 
 qui sum sellyear
 local minyear = `r(min)'
@@ -135,7 +131,7 @@ gen sellpctalt	=	sellorderalt/sellordermax
 drop sellordermax sellorderalt
 
 compress 
-save ${datdir}lafinal${version}.dta, replace
+save ${datdir}sffinal${version}.dta, replace
 
 
 log close `filename'

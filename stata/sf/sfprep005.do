@@ -1,13 +1,10 @@
-// Copyright 2013,2018 Timothy John Schwuchow
+// Copyright (C) 2018 Timothy John Schwuchow
 //
-// program 			-	sfprepxxx.do	-	Basic setup for sf dataset
-//
-// version 			-	005		-	Cleaned up old code
-//
+// program 			-	sfprepxxx.do	-	Basic setup for SF dataset
 // output			-	${datadir}sfnoincludexxx.dta	-	non-target observations
 // 					-	${datadir}sfincludexxx.dta		-	target observations
 
-timer on 1
+
 local filename sfprep${version}
 capture log close `filename'
 log using ${logdir}`filename'.txt, replace text name(`filename')
@@ -115,7 +112,11 @@ use sr_unique_id property_id sr_date_transfer sr_val_transfer applicantrace appl
 	replace nunit 		= 	. if nunit == 0
 	replace yrbld 		= 	. if yrbld == 0
 	replace inc 		= 	. if inc == 0
-
+    gen state = "06"
+    ren county countytemp 
+    gen county = string(countytemp,"%03.0f") 
+    drop countytemp 
+    
 }
 
 //////////////////////////
@@ -128,7 +129,7 @@ use sr_unique_id property_id sr_date_transfer sr_val_transfer applicantrace appl
 	}
 	else {
 		egen devarea 		= 	group(county tract)
-		replace devarea 	= 	. if county == . | tract == .
+		replace devarea 	= 	. if missing(county) | tract == .
 	}
 }
 ////////////////////
@@ -392,12 +393,10 @@ use sr_unique_id property_id sr_date_transfer sr_val_transfer applicantrace appl
 // Merge census data into main set //
 /////////////////////////////////////
 {
-    drop state 
-    replace state = "06"
-    ren county countytemp 
-    gen county = string(county,"%03.0f") 
+    
+
 	sort state county 
-	merge m:1 state county using ${datdir}/census.dta
+	merge m:1 state county using ${datdir}census.dta
 	tab _merge
 	drop if _merge==2
 	drop _merge
@@ -434,6 +433,7 @@ use sr_unique_id property_id sr_date_transfer sr_val_transfer applicantrace appl
 	gen asian 		= 	(race == 2)
 	gen black 		= 	(race == 3)
 	gen white 		= 	(race == 5)
+	local rvars black white asian native hisp
 	egen hasrace 	= 	rowmax(`rvars')
 
 	label variable hisp "=1 -> buyer is Hispanic"
@@ -442,7 +442,7 @@ use sr_unique_id property_id sr_date_transfer sr_val_transfer applicantrace appl
 	label variable black "=1 -> buyer is Black"
 	label variable white "=1 -> buyer is White"
 	la var hasrace "=1 if buyer race is known"
-	local rvars black white asian native hisp
+	
 }
 
 /////////////////////////////////////////
@@ -470,18 +470,14 @@ use sr_unique_id property_id sr_date_transfer sr_val_transfer applicantrace appl
 
 ////////////////////////
 // Save included data //
-// ////////////////////////
+////////////////////////
 {
 	compress
 	save ${datdir}sfinclude${version}.dta, replace
 }
 
 {
-	timer off 1
-	timer list 1
-	loc t1min = `r(t1)' / 60.0 
 
-	timer clear 1
 	log close `filename'
 }
 
