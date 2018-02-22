@@ -32,11 +32,12 @@ if `useincnorm' == 1 {
 }
 else	{
 	local heterolist linc `rvars'
+
 }
 
 gen nonwhite = (white != 1)
 
-local regvar lp sqft numbed numbath
+local regvar lp sqft numbed numbath ltsell lotsize 
 
 foreach x in `heterolist' {
 	local avgextlist `avgextlist' meanext`x' 
@@ -50,19 +51,41 @@ foreach x in `regvar' {
 	local regvardif `regvardif' `x'dif 
 } 
 
-
+local heterolist linc white nonwhite 
 
 xtset bid
 
 // 1. Simple building FE regression with no externality (estimates should be positive - indicating that higher income buyers pay more later)
 xtreg `regvar' c.sellpct##c.(`heterolist') if newsale==1, fe 
-xtreg `regvar' c.sellpct##c.(`heterolist') `cumextlist' if newsale==1, fe
 
-// 3. Differences in differences regression 
-reg lpdif c.sellpct##c.(`heterolist') if newsale==1
+
+xtreg `regvar' c.sellpct##c.(`heterolist') if newsale==1 & usecode=="RCON", fe 
+
+qui sum lpreturn if newsale==1, det 
+
+replace lpreturn = . if lpreturn < r(p5)
+replace lpreturn = . if lpreturn > r(p95)
+
+//reg lpreturn sqft numbed numbath ltsell c.sellpct##c.(linc white) medhhinc00 pctwhite00 if newsale == 1, r 
+//reg lpreturn sqft numbed numbath ltsell c.sellpct##c.(linc white) medhhinc00 pctwhite00 if newsale == 1 & usecode=="RCON", r 
+
+//reg lpreturn sqft numbed numbath ltsell c.sellpct##c.(linc white) medhhinc00 pctwhite00 if newsale == 1 & numunits > 40, r 
+//reg lpreturn sqft numbed numbath ltsell c.sellpct##c.(linc white) medhhinc00 pctwhite00 if newsale == 1 & usecode=="RCON" & numunits > 40, r 
+
+
+//egen stco = group(state county)
+
+xtset bid 
+
+xtreg lpreturn sqft numbed numbath ltsell c.sellpct##c.(`heterolist') medhhinc00 pctwhite00  if newsale==1, fe r
+outtex, level below plain file(${datdir}output.tex) append long title(Regression of Housing Returns on Interactions of Sales Order and Buyer Socioeconomic Characteristics) 
+xtreg lpreturn sqft numbed numbath ltsell c.sellpct##c.(`heterolist') medhhinc00 pctwhite00  if newsale==1, re r 
+xtreg lpreturn sqft numbed numbath ltsell c.sellpct##c.(`heterolist') medhhinc00 pctwhite00 if newsale==1 & usecode=="RCON", fe 
+xtreg lpreturn sqft numbed numbath ltsell c.sellpct##c.(`heterolist') medhhinc00 pctwhite00  if newsale==1 & numunits>9, fe 
+xtreg lpreturn sqft numbed numbath ltsell c.sellpct##c.(`heterolist') medhhinc00 pctwhite00 if newsale==1 & usecode=="RCON" & numunits >9, fe 
 
 /* 
-// outtex, level below plain file(textable/`texname'.tex) append long title(Basic regression with externality) 
+
 
 // 3. Counterfactual regression (on resold units) (estimates should not be positive since income shouldn't matter here)
 xtreg `regvar' c.sellpctcounter##c.(`heterolist') `cumextlist' ibn.timedummy if newsale == 0, r fe 
